@@ -1,0 +1,36 @@
+name: Flag Wind Check
+
+on:
+  schedule:
+    - cron: '0 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  check-wind:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Run flag check
+        env:
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+        run: python flag_check.py
+
+      - name: Save state
+        run: |
+          git config user.name "flag-bot"
+          git config user.email "flag-bot@example.com"
+          git add state.json
+          git diff --quiet --cached || git commit -m "update flag state"
+          git push
